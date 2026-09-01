@@ -164,7 +164,7 @@
         <strong>Add a selfie with the bag</strong>
         <small>Take a photo or choose one from your phone</small>
       </div>
-      <input id="photoInput" type="file" accept="image/*" capture="user" style="display:none">
+      <input id="photoInput" type="file" accept="image/*" capture="user" style="display:none" onchange="photoSelected(this)">
 
       <div class="field">
         <label>F3 Name</label>
@@ -194,7 +194,7 @@
       </div>
 
       <button class="primary" onclick="submitCheckin()">ADD ME TO THE JOURNEY</button>
-      <div class="note">Prototype only. No personal data is uploaded or stored.</div>
+      <div class="note">Your check-in and selected photo will be added to the Rucktober journey.</div>
     </div>
   </section>
 
@@ -209,10 +209,10 @@
     </div>
 
     <div class="stats">
-      <div class="stat"><div class="num accent" id="weight">62.4</div><div class="lbl">lbs current weight</div></div>
-      <div class="stat"><div class="num" id="donors">175</div><div class="lbl">donors</div></div>
-      <div class="stat"><div class="num" id="carries">96</div><div class="lbl">carries</div></div>
-      <div class="stat"><div class="num">11</div><div class="lbl">AOs visited</div></div>
+      <div class="stat"><div class="num accent" id="weight">2</div><div class="lbl">lbs current weight</div></div>
+      <div class="stat"><div class="num" id="donors">2</div><div class="lbl">donors</div></div>
+      <div class="stat"><div class="num" id="carries">0</div><div class="lbl">carries</div></div>
+      <div class="stat"><div class="num" id="aosVisited">0</div><div class="lbl">AOs visited</div></div>
     </div>
 
     <div class="grid">
@@ -220,7 +220,7 @@
         <h3>Weight Goal</h3>
         <div style="display:flex;justify-content:space-between;align-items:end;margin-bottom:10px">
           <div>
-            <div style="font-family:Anton;font-size:42px"><span id="weight2">62.4</span> <span style="font-size:20px;color:var(--muted)">/ 100 lbs</span></div>
+            <div style="font-family:Anton;font-size:42px"><span id="weight2">2</span> <span style="font-size:20px;color:var(--muted)">/ 100 lbs</span></div>
           </div>
           <div style="font-size:12px;color:var(--accent);font-weight:800">62%</div>
         </div>
@@ -276,102 +276,142 @@
 </div>
 
 <script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbxdVdeu6YWpAK7shYZOJ5AxME359Tly3kMi9npdWov0ZthJoAub9zKrCJmlOsAXkFjU/exec";
-  let selectedAction = "Both";
+const API_URL = "https://script.google.com/macros/s/AKfycbxdVdeu6YWpAK7shYZOJ5AxME359Tly3kMi9npdWov0ZthJoAub9zKrCJmlOsAXkFjU/exec";
+let selectedAction = "Both";
+let selectedPhoto = null;
 
-  document.querySelectorAll(".choice").forEach(el => {
-    el.addEventListener("click", () => {
-      document.querySelectorAll(".choice").forEach(c => c.classList.remove("active"));
-      el.classList.add("active");
-      selectedAction = el.dataset.value;
-    });
+document.querySelectorAll(".choice").forEach(el => {
+  el.addEventListener("click", () => {
+    document.querySelectorAll(".choice").forEach(c => c.classList.remove("active"));
+    el.classList.add("active");
+    selectedAction = el.dataset.value;
   });
+});
 
-  async function submitCheckin() {
-    const name = document.getElementById("name").value.trim() || "Anonymous PAX";
-    const ao = document.getElementById("ao").value;
-    const button = document.querySelector(".primary");
-    const original = button.textContent;
+function photoSelected(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 8 * 1024 * 1024) {
+    alert("Please choose a photo under 8 MB.");
+    input.value = "";
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    selectedPhoto = {base64:e.target.result,type:file.type || "image/jpeg"};
+    const box = document.querySelector(".upload");
+    box.querySelector("strong").textContent = "Selfie ready ✓";
+    box.querySelector("small").textContent = "Tap to choose a different photo";
+  };
+  reader.readAsDataURL(file);
+}
 
-    button.disabled = true;
-    button.textContent = "ADDING YOU...";
+async function submitCheckin() {
+  const name = document.getElementById("name").value.trim() || "Anonymous PAX";
+  const ao = document.getElementById("ao").value;
+  const button = document.querySelector(".primary");
+  button.disabled = true;
+  button.textContent = "ADDING YOU...";
 
-    try {
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ name, ao, action: selectedAction })
-      });
-
-      const result = await response.json();
-      if (!result.ok) throw new Error(result.error || "Submission failed");
-
-      await loadDashboardData();
-
-      const latestName = document.querySelector(".card:nth-of-type(2) div[style*='font-size:27px']");
-      const latestMeta = document.querySelector(".card:nth-of-type(2) div[style*='color:var(--muted)']");
-      if (latestName) latestName.textContent = name.toUpperCase();
-      if (latestMeta) latestMeta.textContent = ao + " • " + selectedAction;
-
-      showDashboard();
-    } catch (err) {
-      alert("Could not submit this check-in. Please try again.\n\n" + err.message);
-    } finally {
-      button.disabled = false;
-      button.textContent = original;
+  try {
+    const payload = {name,ao,action:selectedAction};
+    if (selectedPhoto) {
+      payload.photoBase64 = selectedPhoto.base64;
+      payload.photoType = selectedPhoto.type;
     }
+    const response = await fetch(API_URL, {
+      method:"POST",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify(payload)
+    });
+    const result = await response.json();
+    if (!result.ok) throw new Error(result.error || "Submission failed");
+    selectedPhoto = null;
+    document.getElementById("photoInput").value = "";
+    await loadDashboardData();
+    showDashboard();
+  } catch(err) {
+    alert("Could not submit check-in. " + err.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "ADD ME TO THE JOURNEY";
   }
+}
 
-  async function loadDashboardData() {
-    try {
-      const response = await fetch(API_URL + "?t=" + Date.now());
-      const data = await response.json();
+async function loadDashboardData() {
+  try {
+    const r = await fetch(API_URL + "?t=" + Date.now());
+    const d = await r.json();
 
-      document.getElementById("donors").textContent = data.donors ?? 0;
-      document.getElementById("carries").textContent = data.carries ?? 0;
+    document.getElementById("weight").textContent = d.currentWeight;
+    document.getElementById("weight2").textContent = d.currentWeight;
+    document.getElementById("donors").textContent = d.donors;
+    document.getElementById("carries").textContent = d.carries;
+    document.getElementById("aosVisited").textContent = d.aosVisited;
 
-      const leaderboard = document.getElementById("leaderboard");
-      if (leaderboard && Array.isArray(data.aoLeaderboard)) {
-        leaderboard.innerHTML = "";
-        data.aoLeaderboard.slice(0, 5).forEach((item, index) => {
-          const row = document.createElement("div");
-          row.className = "row";
-          row.innerHTML = `
-            <div class="rank">${index + 1}</div>
-            <div class="ao">${escapeHtml(item.ao)}</div>
-            <div class="count">${item.count}</div>
-          `;
-          leaderboard.appendChild(row);
-        });
-      }
-    } catch (err) {
-      console.warn("Dashboard data could not be loaded:", err);
+    const goal = d.weightGoal || 100;
+    const pct = Math.min(100, Math.round((d.currentWeight / goal) * 100));
+    const bar = document.querySelector(".weightbar > div");
+    if (bar) bar.style.width = pct + "%";
+    const pctEl = document.querySelector(".weightbar").previousElementSibling.querySelector("div:last-child");
+    if (pctEl) pctEl.textContent = pct + "%";
+
+    const leader = document.getElementById("leaderboard");
+    leader.innerHTML = "";
+    (d.aoLeaderboard || []).slice(0,8).forEach((x,i)=>{
+      leader.insertAdjacentHTML("beforeend",
+        `<div class="row"><div class="rank">${i+1}</div><div class="ao">${esc(x.ao)}</div><div class="count">${x.count}</div></div>`);
+    });
+    if (!leader.children.length) leader.innerHTML = '<div style="color:var(--muted);font-size:13px">No AO check-ins yet.</div>';
+
+    if (d.latest) {
+      const n = document.querySelector(".card:nth-of-type(2) div[style*='font-size:27px']");
+      const m = document.querySelector(".card:nth-of-type(2) div[style*='color:var(--muted)']");
+      if(n) n.textContent = d.latest.name.toUpperCase();
+      if(m) m.textContent = d.latest.ao + " • " + d.latest.action;
     }
-  }
 
-  function escapeHtml(value) {
-    return String(value)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
+    const photoGrid = document.querySelector(".photos");
+    photoGrid.innerHTML = "";
+    (d.photos || []).forEach(p=>{
+      const div=document.createElement("div");
+      div.className="photo";
+      div.style.backgroundImage=`url("${p.url}")`;
+      div.style.backgroundSize="cover";
+      div.style.backgroundPosition="center";
+      photoGrid.appendChild(div);
+    });
+    if (!(d.photos || []).length) {
+      photoGrid.innerHTML='<div style="grid-column:1/-1;color:var(--muted);padding:12px 0">The first bag selfie will appear here.</div>';
+    }
 
-  function showDashboard() {
-    document.getElementById("checkin").classList.remove("active");
-    document.getElementById("dashboard").classList.add("active");
-    loadDashboardData();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    const timeline = document.querySelector(".timeline");
+    timeline.innerHTML="";
+    (d.journey || []).forEach(x=>{
+      timeline.insertAdjacentHTML("beforeend",
+        `<div class="event"><div class="dot"></div><div><b>${esc(x.event)}</b><span>${esc(x.detail)}</span></div></div>`);
+    });
+    if (!(d.journey || []).length) timeline.innerHTML='<div style="color:var(--muted);font-size:13px">The journey starts here.</div>';
+  } catch(e) {
+    console.warn(e);
   }
+}
 
-  function showCheckin() {
-    document.getElementById("dashboard").classList.remove("active");
-    document.getElementById("checkin").classList.add("active");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
+function esc(v) {
+  return String(v ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+}
+function showDashboard() {
+  document.getElementById("checkin").classList.remove("active");
+  document.getElementById("dashboard").classList.add("active");
   loadDashboardData();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function showCheckin() {
+  document.getElementById("dashboard").classList.remove("active");
+  document.getElementById("checkin").classList.add("active");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+loadDashboardData();
 </script>
 </body>
 </html>
