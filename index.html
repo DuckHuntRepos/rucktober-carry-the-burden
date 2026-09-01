@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rucktober | Carry the Burden</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0c0d0e;
+      --panel:#16181a;
+      --panel2:#1d2023;
+      --text:#f5f5f2;
+      --muted:#a8adaf;
+      --accent:#d7ff3f;
+      --line:#2a2e31;
+      --danger:#ff6b6b;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(215,255,63,.08), transparent 28%),
+        linear-gradient(180deg,#0b0c0d,#111315 45%,#0b0c0d);
+      color:var(--text);
+      font-family:Inter,system-ui,sans-serif;
+      min-height:100vh;
+    }
+    .shell{max-width:920px;margin:0 auto;padding:18px}
+    .brand{
+      display:flex;align-items:center;justify-content:space-between;
+      gap:12px;padding:8px 2px 18px;
+    }
+    .brand h1{
+      font-family:Anton,Impact,sans-serif;
+      letter-spacing:1px;font-size:28px;margin:0;
+    }
+    .brand .tag{
+      font-size:11px;text-transform:uppercase;letter-spacing:1.5px;
+      border:1px solid var(--line);padding:7px 10px;border-radius:999px;color:var(--muted);
+    }
+    .screen{display:none}
+    .screen.active{display:block}
+    .hero{
+      border:1px solid var(--line);background:linear-gradient(180deg,#17191b,#111315);
+      border-radius:24px;padding:26px 22px;box-shadow:0 20px 50px rgba(0,0,0,.3);
+    }
+    .eyebrow{
+      font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--accent);
+    }
+    .hero h2{
+      font-family:Anton,Impact,sans-serif;
+      font-size:52px;line-height:.95;letter-spacing:.5px;margin:10px 0 14px;
+    }
+    .hero p{color:var(--muted);line-height:1.55;margin:0 0 22px;font-size:15px}
+    .upload{
+      border:1px dashed #485046;background:#131615;border-radius:18px;padding:24px 18px;
+      text-align:center;cursor:pointer;margin-bottom:16px;
+    }
+    .upload strong{display:block;font-size:17px;margin-top:8px}
+    .upload small{color:var(--muted)}
+    input,select{
+      width:100%;background:#101214;border:1px solid var(--line);color:var(--text);
+      padding:14px 14px;border-radius:14px;font-size:16px;outline:none;
+    }
+    label{font-size:12px;color:#c7cbcd;font-weight:700;text-transform:uppercase;letter-spacing:.8px}
+    .field{display:grid;gap:8px;margin-top:14px}
+    .choices{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+    .choice{
+      border:1px solid var(--line);border-radius:12px;padding:12px 8px;text-align:center;
+      cursor:pointer;color:var(--muted);font-weight:700;font-size:13px;background:#111315;
+    }
+    .choice.active{border-color:var(--accent);color:#10110d;background:var(--accent)}
+    .primary{
+      width:100%;border:0;border-radius:15px;background:var(--accent);color:#111;
+      font-weight:900;padding:16px;font-size:16px;margin-top:20px;cursor:pointer;
+    }
+    .secondary{
+      border:1px solid var(--line);background:#151719;color:var(--text);
+      border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer;
+    }
+    .note{font-size:11px;color:#7f8588;text-align:center;margin-top:10px}
+    .toprow{
+      display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:16px
+    }
+    .toprow h2{font-family:Anton,Impact,sans-serif;font-size:40px;margin:0;line-height:1}
+    .toprow p{margin:6px 0 0;color:var(--muted);font-size:13px}
+    .stats{
+      display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0;
+    }
+    .stat{
+      background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 14px;
+    }
+    .stat .num{font-family:Anton,Impact,sans-serif;font-size:34px;line-height:1}
+    .stat .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:7px}
+    .accent{color:var(--accent)}
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}
+    .card{
+      background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px;
+    }
+    .card h3{margin:0 0 14px;font-size:15px;text-transform:uppercase;letter-spacing:1px}
+    .weightbar{
+      height:18px;background:#0e1011;border:1px solid var(--line);border-radius:999px;overflow:hidden;
+    }
+    .weightbar > div{height:100%;width:62%;background:linear-gradient(90deg,var(--accent),#f6ffb0)}
+    .weightmeta{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:8px}
+    .leader{display:grid;gap:9px}
+    .row{
+      display:grid;grid-template-columns:28px 1fr 52px;align-items:center;gap:10px;
+      background:#111315;border-radius:12px;padding:10px 11px;
+    }
+    .rank{font-weight:900;color:var(--accent)}
+    .ao{font-weight:700}
+    .count{text-align:right;color:var(--muted);font-size:13px}
+    .photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .photo{
+      aspect-ratio:1/1;border-radius:13px;overflow:hidden;border:1px solid var(--line);
+      background:
+        linear-gradient(145deg,rgba(215,255,63,.14),rgba(255,255,255,.02)),
+        #222629;
+      position:relative;
+    }
+    .photo::after{
+      content:"RUCKTOBER";position:absolute;bottom:8px;left:8px;font-size:10px;font-weight:900;
+      letter-spacing:1px;color:#fff;background:rgba(0,0,0,.55);padding:4px 6px;border-radius:6px;
+    }
+    .timeline{display:grid;gap:11px}
+    .event{display:grid;grid-template-columns:10px 1fr;gap:10px}
+    .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);margin-top:4px}
+    .event b{font-size:13px}
+    .event span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+    .footer{
+      text-align:center;color:#6f7578;font-size:11px;padding:22px 0 8px;
+    }
+    @media(max-width:700px){
+      .hero h2{font-size:44px}
+      .stats{grid-template-columns:repeat(2,1fr)}
+      .grid{grid-template-columns:1fr}
+      .toprow{align-items:center}
+      .toprow h2{font-size:34px}
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <div class="brand">
+    <h1>RUCKTOBER</h1>
+    <div class="tag">Carry the Burden</div>
+  </div>
+
+  <section id="checkin" class="screen active">
+    <div class="hero">
+      <div class="eyebrow">You found the bag</div>
+      <h2>Carry the<br>Burden.</h2>
+      <p>
+        This bag gets heavier as our community gives. Add yourself to the journey,
+        then see how much weight we are carrying together.
+      </p>
+
+      <div class="upload" onclick="document.getElementById('photoInput').click()">
+        <div style="font-size:34px">📸</div>
+        <strong>Add a selfie with the bag</strong>
+        <small>Take a photo or choose one from your phone</small>
+      </div>
+      <input id="photoInput" type="file" accept="image/*" capture="user" style="display:none">
+
+      <div class="field">
+        <label>F3 Name</label>
+        <input id="name" placeholder="DuckHunt" />
+      </div>
+
+      <div class="field">
+        <label>AO</label>
+        <select id="ao">
+          <option>Da Grizz</option>
+          <option>Ravens Nest</option>
+          <option>The Ridge</option>
+          <option>Black Rock</option>
+          <option>Olympiad</option>
+          <option>Colosseum</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>What did you do today?</label>
+        <div class="choices">
+          <div class="choice" data-value="Donated">Donated</div>
+          <div class="choice" data-value="Carried">Carried</div>
+          <div class="choice active" data-value="Both">Both</div>
+        </div>
+      </div>
+
+      <button class="primary" onclick="submitCheckin()">ADD ME TO THE JOURNEY</button>
+      <div class="note">Prototype only. No personal data is uploaded or stored.</div>
+    </div>
+  </section>
+
+  <section id="dashboard" class="screen">
+    <div class="toprow">
+      <div>
+        <div class="eyebrow">Live community dashboard</div>
+        <h2>THE BURDEN GROWS.</h2>
+        <p>Every coin, every carry, every AO.</p>
+      </div>
+      <button class="secondary" onclick="showCheckin()">+ Check In</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="num accent" id="weight">62.4</div><div class="lbl">lbs current weight</div></div>
+      <div class="stat"><div class="num" id="donors">175</div><div class="lbl">donors</div></div>
+      <div class="stat"><div class="num" id="carries">96</div><div class="lbl">carries</div></div>
+      <div class="stat"><div class="num">11</div><div class="lbl">AOs visited</div></div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Weight Goal</h3>
+        <div style="display:flex;justify-content:space-between;align-items:end;margin-bottom:10px">
+          <div>
+            <div style="font-family:Anton;font-size:42px"><span id="weight2">62.4</span> <span style="font-size:20px;color:var(--muted)">/ 100 lbs</span></div>
+          </div>
+          <div style="font-size:12px;color:var(--accent);font-weight:800">62%</div>
+        </div>
+        <div class="weightbar"><div></div></div>
+        <div class="weightmeta"><span>Started at 0 lbs</span><span>Goal: 100 lbs</span></div>
+      </div>
+
+      <div class="card">
+        <h3>Latest Carry</h3>
+        <div style="font-size:27px;font-family:Anton">DUCKHUNT</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:4px">Da Grizz • Donated + Carried</div>
+        <div style="margin-top:14px;font-size:13px;line-height:1.5">
+          “The burden gets lighter when more people help carry it.”
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>AO Leaderboard</h3>
+        <div class="leader" id="leaderboard">
+          <div class="row"><div class="rank">1</div><div class="ao">Da Grizz</div><div class="count">38</div></div>
+          <div class="row"><div class="rank">2</div><div class="ao">Ravens Nest</div><div class="count">31</div></div>
+          <div class="row"><div class="rank">3</div><div class="ao">The Ridge</div><div class="count">27</div></div>
+          <div class="row"><div class="rank">4</div><div class="ao">Black Rock</div><div class="count">22</div></div>
+          <div class="row"><div class="rank">5</div><div class="ao">Olympiad</div><div class="count">18</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Bag Journey</h3>
+        <div class="timeline">
+          <div class="event"><div class="dot"></div><div><b>Da Grizz</b><span>Bag weighed in at 62.4 lbs</span></div></div>
+          <div class="event"><div class="dot"></div><div><b>Ravens Nest</b><span>17 new donors added</span></div></div>
+          <div class="event"><div class="dot"></div><div><b>The Ridge</b><span>$46 in bills converted to coins</span></div></div>
+          <div class="event"><div class="dot"></div><div><b>Black Rock</b><span>Bag crossed the 50 lb mark</span></div></div>
+        </div>
+      </div>
+
+      <div class="card" style="grid-column:1/-1">
+        <h3>Faces Behind the Weight</h3>
+        <div class="photos">
+          <div class="photo"></div>
+          <div class="photo"></div>
+          <div class="photo"></div>
+          <div class="photo"></div>
+          <div class="photo"></div>
+          <div class="photo"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">RUCKTOBER • F3 PLAINFIELD • CARRY THE BURDEN</div>
+  </section>
+</div>
+
+<script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbxdVdeu6YWpAK7shYZOJ5AxME359Tly3kMi9npdWov0ZthJoAub9zKrCJmlOsAXkFjU/exec";
+  let selectedAction = "Both";
+
+  document.querySelectorAll(".choice").forEach(el => {
+    el.addEventListener("click", () => {
+      document.querySelectorAll(".choice").forEach(c => c.classList.remove("active"));
+      el.classList.add("active");
+      selectedAction = el.dataset.value;
+    });
+  });
+
+  async function submitCheckin() {
+    const name = document.getElementById("name").value.trim() || "Anonymous PAX";
+    const ao = document.getElementById("ao").value;
+    const button = document.querySelector(".primary");
+    const original = button.textContent;
+
+    button.disabled = true;
+    button.textContent = "ADDING YOU...";
+
+    try {
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ name, ao, action: selectedAction })
+      });
+
+      const result = await response.json();
+      if (!result.ok) throw new Error(result.error || "Submission failed");
+
+      await loadDashboardData();
+
+      const latestName = document.querySelector(".card:nth-of-type(2) div[style*='font-size:27px']");
+      const latestMeta = document.querySelector(".card:nth-of-type(2) div[style*='color:var(--muted)']");
+      if (latestName) latestName.textContent = name.toUpperCase();
+      if (latestMeta) latestMeta.textContent = ao + " • " + selectedAction;
+
+      showDashboard();
+    } catch (err) {
+      alert("Could not submit this check-in. Please try again.\n\n" + err.message);
+    } finally {
+      button.disabled = false;
+      button.textContent = original;
+    }
+  }
+
+  async function loadDashboardData() {
+    try {
+      const response = await fetch(API_URL + "?t=" + Date.now());
+      const data = await response.json();
+
+      document.getElementById("donors").textContent = data.donors ?? 0;
+      document.getElementById("carries").textContent = data.carries ?? 0;
+
+      const leaderboard = document.getElementById("leaderboard");
+      if (leaderboard && Array.isArray(data.aoLeaderboard)) {
+        leaderboard.innerHTML = "";
+        data.aoLeaderboard.slice(0, 5).forEach((item, index) => {
+          const row = document.createElement("div");
+          row.className = "row";
+          row.innerHTML = `
+            <div class="rank">${index + 1}</div>
+            <div class="ao">${escapeHtml(item.ao)}</div>
+            <div class="count">${item.count}</div>
+          `;
+          leaderboard.appendChild(row);
+        });
+      }
+    } catch (err) {
+      console.warn("Dashboard data could not be loaded:", err);
+    }
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function showDashboard() {
+    document.getElementById("checkin").classList.remove("active");
+    document.getElementById("dashboard").classList.add("active");
+    loadDashboardData();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function showCheckin() {
+    document.getElementById("dashboard").classList.remove("active");
+    document.getElementById("checkin").classList.add("active");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  loadDashboardData();
+</script>
+</body>
+</html>
