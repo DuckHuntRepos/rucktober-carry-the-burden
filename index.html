@@ -319,8 +319,10 @@ function show(id){["dashboardView","checkinView","adminView"].forEach(x=>documen
 if(isAdmin){show("adminView");loadAdmin();}else if(isCheckin){show("checkinView");}else{show("dashboardView");loadDashboard();}
 
 document.querySelectorAll(".choice").forEach(el=>el.onclick=()=>{document.querySelectorAll(".choice").forEach(c=>c.classList.remove("active"));el.classList.add("active");selectedAction=el.dataset.value;});
-document.getElementById("photoInput").onchange=e=>{const f=e.target.files&&e.target.files[0];if(!f)return;if(f.size>8*1024*1024){alert("Please choose a photo under 8 MB.");e.target.value="";return;}const r=new FileReader();r.onload=ev=>{selectedPhoto={base64:ev.target.result,type:f.type||"image/jpeg"};uploadTitle.textContent="Selfie ready ✓";uploadSub.textContent="Tap to choose a different photo";};r.readAsDataURL(f);};
-submitBtn.onclick=submitCheckin;saveSettings.onclick=saveSettings;addJourney.onclick=addJourney;
+document.getElementById("photoInput").onchange=e=>{const f=e.target.files&&e.target.files[0];if(!f)return;if(f.size>8*1024*1024){alert("Please choose a photo under 8 MB.");e.target.value="";return;}const r=new FileReader();r.onload=ev=>{selectedPhoto={base64:ev.target.result,type:f.type||"image/jpeg"};document.getElementById("uploadTitle").textContent="Selfie ready ✓";document.getElementById("uploadSub").textContent="Tap to choose a different photo";};r.readAsDataURL(f);};
+document.getElementById("submitBtn").addEventListener("click", submitCheckin);
+document.getElementById("saveSettings").addEventListener("click", saveSettings);
+document.getElementById("addJourney").addEventListener("click", addJourney);
 
 async function apiPost(payload){const r=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});return r.json();}
 async function loadDashboard(){
@@ -336,9 +338,59 @@ async function loadDashboard(){
   photos.innerHTML="";(d.photos||[]).slice(0,6).forEach(x=>{const p=document.createElement("div");p.className="photo";p.style.backgroundImage=`url("${x.url}")`;photos.appendChild(p);});if(!photos.children.length)photos.innerHTML='<div class="empty">The first bag selfie will appear here.</div>';
 }
 async function submitCheckin(){
-  const n=name.value.trim(),a=ao.value;if(!n)return alert("Enter your F3 name first.");if(!a)return alert("Select your AO first.");
-  submitBtn.disabled=true;submitBtn.textContent="ADDING YOU...";
-  try{const p={type:"checkin",name:n,ao:a,action:selectedAction};if(selectedPhoto){p.photoBase64=selectedPhoto.base64;p.photoType=selectedPhoto.type;}const x=await apiPost(p);if(!x.ok)throw new Error(x.error||"Submission failed");checkinMessage.innerHTML='<div class="success">You are part of the journey. Opening the dashboard…</div>';setTimeout(()=>location.href="./",900);}catch(e){alert("Could not submit check-in. "+e.message);submitBtn.disabled=false;submitBtn.textContent="ADD ME TO THE JOURNEY";}
+  const nameField = document.getElementById("name");
+  const aoField = document.getElementById("ao");
+  const button = document.getElementById("submitBtn");
+  const message = document.getElementById("checkinMessage");
+
+  const n = nameField.value.trim();
+  const a = aoField.value;
+
+  if (!n) {
+    alert("Enter your F3 name first.");
+    nameField.focus();
+    return;
+  }
+
+  if (!a) {
+    alert("Select your AO first.");
+    aoField.focus();
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "ADDING YOU...";
+
+  try {
+    const payload = {
+      type: "checkin",
+      name: n,
+      ao: a,
+      action: selectedAction
+    };
+
+    if (selectedPhoto) {
+      payload.photoBase64 = selectedPhoto.base64;
+      payload.photoType = selectedPhoto.type;
+    }
+
+    const result = await apiPost(payload);
+
+    if (!result.ok) {
+      throw new Error(result.error || "Submission failed");
+    }
+
+    message.innerHTML = '<div class="success">You are part of the journey. Opening the dashboard…</div>';
+
+    setTimeout(() => {
+      window.location.href = "./";
+    }, 900);
+
+  } catch (err) {
+    alert("Could not submit check-in. " + err.message);
+    button.disabled = false;
+    button.textContent = "ADD ME TO THE JOURNEY";
+  }
 }
 async function loadAdmin(){
   const r=await fetch(API_URL+"?mode=admin&t="+Date.now());const d=await r.json();
@@ -370,7 +422,22 @@ async function saveSettings(){
     alert("Could not save settings. " + err.message);
   }
 }
-async function addJourney(){const e=journeyTitle.value.trim(),d=journeyDetail.value.trim();if(!e)return alert("Add a journey title first.");const x=await apiPost({type:"journey",event:e,detail:d});if(!x.ok)return alert(x.error);journeyTitle.value="";journeyDetail.value="";loadAdmin();}
+async function addJourney(){
+  const titleField = document.getElementById("journeyTitle");
+  const detailField = document.getElementById("journeyDetail");
+
+  const e = titleField.value.trim();
+  const d = detailField.value.trim();
+
+  if (!e) return alert("Add a journey title first.");
+
+  const x = await apiPost({type:"journey", event:e, detail:d});
+  if (!x.ok) return alert(x.error);
+
+  titleField.value = "";
+  detailField.value = "";
+  await loadAdmin();
+});if(!x.ok)return alert(x.error);journeyTitle.value="";journeyDetail.value="";loadAdmin();}
 async function saveCheckin(row){const x=await apiPost({type:"updateCheckin",row,name:document.getElementById("n"+row).value,ao:document.getElementById("a"+row).value,action:document.getElementById("ac"+row).value});if(!x.ok)return alert(x.error);alert("Check-in updated.");}
 async function deleteCheckin(row){if(!confirm("Delete this check-in?"))return;const x=await apiPost({type:"deleteCheckin",row});if(!x.ok)return alert(x.error);loadAdmin();}
 async function deleteJourney(row){if(!confirm("Delete this journey entry?"))return;const x=await apiPost({type:"deleteJourney",row});if(!x.ok)return alert(x.error);loadAdmin();}
