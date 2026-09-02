@@ -346,7 +346,30 @@ async function loadAdmin(){
   adminCheckins.innerHTML="";(d.checkins||[]).forEach(x=>adminCheckins.insertAdjacentHTML("beforeend",`<tr><td><input id="n${x.row}" value="${attr(x.name)}"></td><td><input id="a${x.row}" value="${attr(x.ao)}"></td><td><select id="ac${x.row}"><option ${x.action==="Donated"?"selected":""}>Donated</option><option ${x.action==="Carried"?"selected":""}>Carried</option><option ${x.action==="Both"?"selected":""}>Both</option></select></td><td>${x.photoUrl?`<a href="${x.photoUrl}" target="_blank" style="color:#ad56ff">View</a>`:""}</td><td><button class="secondary mini" onclick="saveCheckin(${x.row})">Save</button> <button class="danger mini" onclick="deleteCheckin(${x.row})">Delete</button></td></tr>`));
   adminJourney.innerHTML="";(d.journey||[]).forEach(x=>adminJourney.insertAdjacentHTML("beforeend",`<tr><td>${esc(x.event)}</td><td>${esc(x.detail)}</td><td><button class="danger mini" onclick="deleteJourney(${x.row})">Delete</button></td></tr>`));
 }
-async function saveSettings(){const x=await apiPost({type:"settings",currentWeight:adminWeight.value,weightGoal:adminGoal.value,startingDonors:adminDonors.value,startingCarries:adminCarries.value,startingAOs:adminAOs.value,messageBoard:adminMessage.value});if(!x.ok)return alert(x.error);alert("Settings updated.");}
+async function saveSettings(){
+  const payload = {
+    type: "settings",
+    currentWeight: document.getElementById("adminWeight").value,
+    weightGoal: document.getElementById("adminGoal").value,
+    startingDonors: document.getElementById("adminDonors").value,
+    startingCarries: document.getElementById("adminCarries").value,
+    startingAOs: document.getElementById("adminAOs").value,
+    messageBoard: document.getElementById("adminMessage").value
+  };
+
+  try {
+    const x = await apiPost(payload);
+    if (!x.ok) throw new Error(x.error || "Settings could not be saved.");
+
+    alert("Settings updated.");
+
+    // Re-load the values from the backend so the admin screen confirms
+    // exactly what was written to the Google Sheet.
+    await loadAdmin();
+  } catch (err) {
+    alert("Could not save settings. " + err.message);
+  }
+}
 async function addJourney(){const e=journeyTitle.value.trim(),d=journeyDetail.value.trim();if(!e)return alert("Add a journey title first.");const x=await apiPost({type:"journey",event:e,detail:d});if(!x.ok)return alert(x.error);journeyTitle.value="";journeyDetail.value="";loadAdmin();}
 async function saveCheckin(row){const x=await apiPost({type:"updateCheckin",row,name:document.getElementById("n"+row).value,ao:document.getElementById("a"+row).value,action:document.getElementById("ac"+row).value});if(!x.ok)return alert(x.error);alert("Check-in updated.");}
 async function deleteCheckin(row){if(!confirm("Delete this check-in?"))return;const x=await apiPost({type:"deleteCheckin",row});if(!x.ok)return alert(x.error);loadAdmin();}
