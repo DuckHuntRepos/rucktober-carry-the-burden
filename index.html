@@ -75,6 +75,15 @@ linear-gradient(#08070c,#07070a)}
 .panel-title{font-family:Anton,Impact,sans-serif;color:var(--purple2);font-size:20px;text-transform:uppercase;margin:0 0 14px}
 .leader-row{display:grid;grid-template-columns:30px 1fr 28px;gap:8px;padding:7px 0;border-bottom:1px solid #2a2a31;font-size:14px}
 .leader-row:last-child{border-bottom:0}
+.ao-weight-row{padding:9px 0;border-bottom:1px solid #2a2a31}
+.ao-weight-row:last-child{border-bottom:0}
+.ao-weight-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:5px}
+.ao-weight-name{font-size:13px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ao-weight-lbs{font-size:12px;font-weight:900;color:#b66cff;white-space:nowrap}
+.ao-weight-track{height:9px;background:#26232d;border-radius:999px;overflow:hidden}
+.ao-weight-fill{height:100%;background:linear-gradient(90deg,#7b2cff,#c15cff);border-radius:999px;min-width:0;transition:width .45s ease}
+.weight-credit-note{font-size:12px;color:#9895a3;line-height:1.4;margin-top:7px}
+
 .latest-name{font-family:Anton,Impact,sans-serif;font-size:32px}
 .latest-ao{font-size:16px;color:var(--purple2);font-weight:800;margin-top:3px}
 .latest-action{display:inline-block;margin-top:12px;background:#3b1959;border:1px solid #5a2b82;color:#bb73ff;padding:5px 10px;border-radius:5px;font-weight:900}
@@ -289,6 +298,7 @@ th{color:#9e98a5;text-transform:uppercase;font-size:10px;letter-spacing:.6px}
     <div class="admin-grid">
       <div class="form-card">
         <div class="field"><label>Current Weight</label><input id="adminWeight" type="number" min="0" step="0.1"></div>
+        <div class="field"><label>Credit Weight Added To</label><select id="weightCreditAO"><option value="">Select AO when weight increases</option><option>Non-F3</option><option>Black Rock</option><option>Citadel</option><option>Complex</option><option>Da Grizz</option><option>Dark Tower</option><option>DMZ</option><option>El Coyote</option><option>Ice House</option><option>Iron Lion</option><option>Launchpad</option><option>Levee</option><option>MoTown</option><option>Noonan’s Ridge</option><option>Outpost</option><option>Rail Splitter</option><option>The Campus</option><option>The Colosseum</option><option>The Globe</option><option>The Grove</option><option>The Island</option><option>The Olympiad</option><option>The Raven’s Nest</option><option>The Ridge</option><option>The Silo</option><option>The Wood</option><option>Three Rivers</option><option>Two Wolves</option></select><div class="weight-credit-note">When Current Weight increases, the difference is credited to this AO and added to the leaderboard.</div></div>
         <div class="field"><label>Weight Goal</label><input id="adminGoal" type="number" min="1" step="0.1"></div>
         <div class="field"><label>Starting Donors</label><input id="adminDonors" type="number" min="0"></div>
         <div class="field"><label>Starting Carries</label><input id="adminCarries" type="number" min="0"></div>
@@ -311,7 +321,7 @@ th{color:#9e98a5;text-transform:uppercase;font-size:10px;letter-spacing:.6px}
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbxdVdeu6YWpAK7shYZOJ5AxME359Tly3kMi9npdWov0ZthJoAub9zKrCJmlOsAXkFjU/exec";
-let selectedAction="Both", selectedPhoto=null;
+let selectedAction="Both", selectedPhoto=null, loadedAdminWeight=null;
 const qp=new URLSearchParams(location.search);
 const isAdmin=qp.has("admin");
 const isCheckin=qp.get("checkin")==="1";
@@ -331,8 +341,8 @@ async function loadDashboard(){
   let total=0;(d.aoLeaderboard||[]).forEach(x=>total+=Number(x.count||0));checkins.textContent=total;
   const m=String(d.messageBoard||"").trim();if(m){messageText.textContent=m;messageBoard.classList.add("show");}
   if(d.latest&&d.latest.name){latestName.textContent=d.latest.name.toUpperCase();latestAO.textContent=d.latest.ao;latestAction.textContent=d.latest.action;latestAction.classList.remove("hidden");}
-  leaderboard.innerHTML="";(d.aoLeaderboard||[]).slice(0,5).forEach((x,i)=>leaderboard.insertAdjacentHTML("beforeend",`<div class="leader-row"><div>${i+1}</div><div>${esc(x.ao)}</div><div>${x.count}</div></div>`));if(!leaderboard.children.length)leaderboard.innerHTML='<div class="empty">No AO check-ins yet.</div>';
-  timeline.innerHTML="";(d.journey||[]).slice(0,5).forEach(x=>timeline.insertAdjacentHTML("beforeend",`<div class="event"><div class="detail">${esc(x.event)}${x.detail?' • '+esc(x.detail):''}</div></div>`));if(!timeline.children.length)timeline.innerHTML='<div class="empty">The journey starts here.</div>';
+  renderWeightLeaderboard(d.journey||[]);
+  timeline.innerHTML="";(d.journey||[]).slice(0,5).forEach(x=>{const we=parseWeightEntry(x);const text=we?`${esc(we.ao)} added ${fmt(we.pounds)} lb • Bag: ${fmt(we.total)} lb`:`${esc(x.event)}${x.detail?' • '+esc(x.detail):''}`;timeline.insertAdjacentHTML("beforeend",`<div class="event"><div class="detail">${text}</div></div>`);});if(!timeline.children.length)timeline.innerHTML='<div class="empty">The journey starts here.</div>';
   photos.innerHTML="";(d.photos||[]).slice(0,6).forEach(x=>{const p=document.createElement("div");p.className="photo";p.style.backgroundImage=`url("${x.url}")`;photos.appendChild(p);});if(!photos.children.length)photos.innerHTML='<div class="empty">The first bag selfie will appear here.</div>';
 }
 async function submitCheckin(){
@@ -364,14 +374,26 @@ async function submitCheckin(){
 }
 async function loadAdmin(){
   const r=await fetch(API_URL+"?mode=admin&t="+Date.now());const d=await r.json();
-  adminWeight.value=d.settings.currentWeight;adminGoal.value=d.settings.weightGoal;adminDonors.value=d.settings.startingDonors;adminCarries.value=d.settings.startingCarries;adminAOs.value=d.settings.startingAOs;adminMessage.value=d.settings.messageBoard||"";
+  adminWeight.value=d.settings.currentWeight;loadedAdminWeight=Number(d.settings.currentWeight||0);adminGoal.value=d.settings.weightGoal;adminDonors.value=d.settings.startingDonors;adminCarries.value=d.settings.startingCarries;adminAOs.value=d.settings.startingAOs;adminMessage.value=d.settings.messageBoard||"";document.getElementById("weightCreditAO").value="";
   adminCheckins.innerHTML="";(d.checkins||[]).forEach(x=>adminCheckins.insertAdjacentHTML("beforeend",`<tr><td><input id="n${x.row}" value="${attr(x.name)}"></td><td><input id="a${x.row}" value="${attr(x.ao)}"></td><td><select id="ac${x.row}"><option ${x.action==="Donated"?"selected":""}>Donated</option><option ${x.action==="Carried"?"selected":""}>Carried</option><option ${x.action==="Both"?"selected":""}>Both</option></select></td><td>${x.photoUrl?`<a href="${x.photoUrl}" target="_blank" style="color:#ad56ff">View</a>`:""}</td><td><button class="secondary mini" onclick="saveCheckin(${x.row})">Save</button> <button class="danger mini" onclick="deleteCheckin(${x.row})">Delete</button></td></tr>`));
-  adminJourney.innerHTML="";(d.journey||[]).forEach(x=>adminJourney.insertAdjacentHTML("beforeend",`<tr><td>${esc(x.event)}</td><td>${esc(x.detail)}</td><td><button class="danger mini" onclick="deleteJourney(${x.row})">Delete</button></td></tr>`));
+  adminJourney.innerHTML="";(d.journey||[]).forEach(x=>{const we=parseWeightEntry(x);const eventText=we?"Weight Contribution":esc(x.event);const detailText=we?`${esc(we.ao)} +${fmt(we.pounds)} lb (bag ${fmt(we.total)} lb)`:esc(x.detail);adminJourney.insertAdjacentHTML("beforeend",`<tr><td>${eventText}</td><td>${detailText}</td><td><button class="danger mini" onclick="deleteJourney(${x.row})">Delete</button></td></tr>`);});
 }
 async function saveSettings(){
+  const weightField=document.getElementById("adminWeight");
+  const creditAO=document.getElementById("weightCreditAO");
+  const newWeight=Number(weightField.value||0);
+  const oldWeight=Number(loadedAdminWeight||0);
+  const added=Number((newWeight-oldWeight).toFixed(1));
+
+  if(added>0 && !creditAO.value){
+    alert("Choose the AO that contributed this weight before saving.");
+    creditAO.focus();
+    return;
+  }
+
   const payload = {
     type: "settings",
-    currentWeight: document.getElementById("adminWeight").value,
+    currentWeight: weightField.value,
     weightGoal: document.getElementById("adminGoal").value,
     startingDonors: document.getElementById("adminDonors").value,
     startingCarries: document.getElementById("adminCarries").value,
@@ -383,10 +405,13 @@ async function saveSettings(){
     const x = await apiPost(payload);
     if (!x.ok) throw new Error(x.error || "Settings could not be saved.");
 
-    alert("Settings updated.");
+    if(added>0){
+      const marker=`AO_WEIGHT::${creditAO.value}::${added}::${newWeight}`;
+      const j=await apiPost({type:"journey",event:"Weight Update",detail:marker});
+      if(!j.ok) throw new Error(j.error || "Weight saved, but AO credit could not be logged.");
+    }
 
-    // Re-load the values from the backend so the admin screen confirms
-    // exactly what was written to the Google Sheet.
+    alert(added>0 ? `Settings updated. ${fmt(added)} lb credited to ${creditAO.value}.` : "Settings updated.");
     await loadAdmin();
   } catch (err) {
     alert("Could not save settings. " + err.message);
@@ -406,6 +431,33 @@ async function addJourney(){
 async function saveCheckin(row){const x=await apiPost({type:"updateCheckin",row,name:document.getElementById("n"+row).value,ao:document.getElementById("a"+row).value,action:document.getElementById("ac"+row).value});if(!x.ok)return alert(x.error);alert("Check-in updated.");}
 async function deleteCheckin(row){if(!confirm("Delete this check-in?"))return;const x=await apiPost({type:"deleteCheckin",row});if(!x.ok)return alert(x.error);loadAdmin();}
 async function deleteJourney(row){if(!confirm("Delete this journey entry?"))return;const x=await apiPost({type:"deleteJourney",row});if(!x.ok)return alert(x.error);loadAdmin();}
+function parseWeightEntry(x){
+  const s=String(x&&x.detail||"");
+  if(!s.startsWith("AO_WEIGHT::"))return null;
+  const p=s.split("::");
+  if(p.length<4)return null;
+  const pounds=Number(p[p.length-2]);
+  const total=Number(p[p.length-1]);
+  const ao=p.slice(1,-2).join("::");
+  if(!ao || !Number.isFinite(pounds) || pounds<=0)return null;
+  return {ao,pounds,total};
+}
+function renderWeightLeaderboard(journey){
+  const totals={};
+  (journey||[]).forEach(x=>{
+    const e=parseWeightEntry(x);
+    if(!e)return;
+    totals[e.ao]=(totals[e.ao]||0)+e.pounds;
+  });
+  const rows=Object.entries(totals).map(([ao,pounds])=>({ao,pounds:Number(pounds.toFixed(1))})).sort((a,b)=>b.pounds-a.pounds||a.ao.localeCompare(b.ao));
+  leaderboard.innerHTML="";
+  if(!rows.length){leaderboard.innerHTML='<div class="empty">No AO weight contributions yet.</div>';return;}
+  const leader=Math.max(...rows.map(x=>x.pounds),0.1);
+  rows.forEach((x,i)=>{
+    const width=Math.max(0,Math.min(100,(x.pounds/leader)*100));
+    leaderboard.insertAdjacentHTML("beforeend",`<div class="ao-weight-row"><div class="ao-weight-head"><div class="ao-weight-name">${i+1}. ${esc(x.ao)}</div><div class="ao-weight-lbs">${fmt(x.pounds)} LB</div></div><div class="ao-weight-track"><div class="ao-weight-fill" style="width:${width.toFixed(2)}%"></div></div></div>`);
+  });
+}
 function fmt(n){return Number.isInteger(n)?String(n):String(Number(n.toFixed(1)));}
 function esc(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");}
 function attr(v){return esc(v);}
