@@ -68,7 +68,7 @@ linear-gradient(#08070c,#07070a)}
 .svg-icon{width:48px;height:48px;fill:var(--purple2);stroke:var(--purple2);stroke-width:2}
 .stat-num{font-family:Anton,Impact,sans-serif;font-size:52px;line-height:.82}
 .stat-label{font-family:Anton,Impact,sans-serif;color:var(--purple2);font-size:19px}
-.stat-start{color:var(--muted);font-size:13px;margin-top:8px}
+.stat-start{display:none;color:var(--muted);font-size:13px;margin-top:8px}
 
 .lower{display:grid;grid-template-columns:1fr 1fr 1.08fr;gap:12px}
 .panel{padding:17px 20px}
@@ -134,6 +134,41 @@ label{font-size:11px;font-weight:900;letter-spacing:.8px;text-transform:uppercas
 input,select,textarea{width:100%;padding:14px;border-radius:11px;border:1px solid #393640;background:#0b0b10;color:white;font:inherit}
 textarea{min-height:92px}
 .upload{border:1px dashed #5c3381;border-radius:13px;padding:23px;text-align:center;cursor:pointer;background:#0f0c14}
+.upload{position:relative;z-index:2}
+.selfie-zone{position:relative;margin-bottom:10px;min-height:190px}
+.polaroids{
+  position:absolute;inset:0;
+  pointer-events:none;
+  z-index:1;
+  opacity:.45;
+}
+.polaroid{
+  position:absolute;
+  width:100px;height:118px;
+  background:#f3f0f4;
+  border-radius:4px;
+  padding:7px 7px 18px 7px;
+  box-shadow:0 10px 24px rgba(0,0,0,.28);
+  overflow:hidden;
+}
+.polaroid img{
+  width:100%;height:100%;
+  object-fit:cover;border-radius:2px;display:block;
+}
+.polaroid.p1{left:8px;top:10px;transform:rotate(-8deg)}
+.polaroid.p2{right:16px;top:2px;transform:rotate(7deg)}
+.polaroid.p3{left:28px;bottom:8px;transform:rotate(6deg)}
+.polaroid.p4{right:4px;bottom:0;transform:rotate(-6deg)}
+.polaroids.empty{display:none}
+@media(max-width:800px){
+  .selfie-zone{min-height:205px}
+  .polaroid{width:84px;height:100px}
+  .polaroid.p1{left:2px;top:16px}
+  .polaroid.p2{right:2px;top:0}
+  .polaroid.p3{left:12px;bottom:5px}
+  .polaroid.p4{right:0;bottom:3px}
+}
+
 .choice-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .choice{padding:12px;border:1px solid #3a3542;border-radius:10px;text-align:center;color:#aaa4af;font-weight:800;cursor:pointer}
 .choice.active{background:var(--purple);color:white;border-color:var(--purple)}
@@ -280,7 +315,15 @@ th{color:#9e98a5;text-transform:uppercase;font-size:10px;letter-spacing:.6px}
     <div class="section-title">YOU FOUND THE BAG</div>
     <div class="form-title">CARRY THE<br>BURDEN.</div>
     <div style="color:var(--muted);margin-bottom:14px">Add yourself to the journey, then see the live dashboard.</div>
-    <div class="upload" onclick="document.getElementById('photoInput').click()"><div style="font-size:30px">📸</div><strong id="uploadTitle">Add a selfie with the bag</strong><div id="uploadSub" style="color:var(--muted);font-size:12px;margin-top:4px">Optional</div></div>
+    <div class="selfie-zone">
+      <div id="polaroids" class="polaroids empty">
+        <div class="polaroid p1"><img id="p1" alt=""></div>
+        <div class="polaroid p2"><img id="p2" alt=""></div>
+        <div class="polaroid p3"><img id="p3" alt=""></div>
+        <div class="polaroid p4"><img id="p4" alt=""></div>
+      </div>
+      <div class="upload" onclick="document.getElementById('photoInput').click()"><div style="font-size:30px">📸</div><strong id="uploadTitle">Add a selfie with the bag</strong><div id="uploadSub" style="color:var(--muted);font-size:12px;margin-top:4px">Optional</div></div>
+    </div>
     <input id="photoInput" type="file" accept="image/*" capture="user" class="hidden">
     <div class="field"><label>F3 Name *</label><input id="name" placeholder="Enter your F3 name" autocomplete="off"></div>
     <div class="field"><label>AO *</label><select id="ao"><option value="">Select your AO</option><option>Non-F3</option><option>Black Rock</option><option>Citadel</option><option>Complex</option><option>Da Grizz</option><option>Dark Tower</option><option>DMZ</option><option>El Coyote</option><option>Ice House</option><option>Iron Lion</option><option>Launchpad</option><option>Levee</option><option>MoTown</option><option>Noonan’s Ridge</option><option>Outpost</option><option>Rail Splitter</option><option>The Campus</option><option>The Colosseum</option><option>The Globe</option><option>The Grove</option><option>The Island</option><option>The Olympiad</option><option>The Raven’s Nest</option><option>The Ridge</option><option>The Silo</option><option>The Wood</option><option>Three Rivers</option><option>Two Wolves</option></select></div>
@@ -327,13 +370,38 @@ const qp=new URLSearchParams(location.search);
 const isAdmin=qp.has("admin");
 const isCheckin=qp.get("checkin")==="1";
 function show(id){["dashboardView","checkinView","adminView"].forEach(x=>document.getElementById(x).classList.add("hidden"));document.getElementById(id).classList.remove("hidden");}
-if(isAdmin){show("adminView");loadAdmin();}else if(isCheckin){show("checkinView");}else{show("dashboardView");loadDashboard();}
+if(isAdmin){show("adminView");loadAdmin();}else if(isCheckin){show("checkinView");loadCheckinPolaroids();}else{show("dashboardView");loadDashboard();}
 
 document.querySelectorAll(".choice").forEach(el=>el.onclick=()=>{document.querySelectorAll(".choice").forEach(c=>c.classList.remove("active"));el.classList.add("active");selectedAction=el.dataset.value;});
 document.getElementById("photoInput").onchange=e=>{const f=e.target.files&&e.target.files[0];if(!f)return;if(f.size>8*1024*1024){alert("Please choose a photo under 8 MB.");e.target.value="";return;}const r=new FileReader();r.onload=ev=>{selectedPhoto={base64:ev.target.result,type:f.type||"image/jpeg"};document.getElementById("uploadTitle").textContent="Selfie ready ✓";document.getElementById("uploadSub").textContent="Tap to choose a different photo";};r.readAsDataURL(f);};
 document.getElementById("submitBtn").onclick=submitCheckin;document.getElementById("saveSettings").onclick=saveSettings;document.getElementById("addJourney").onclick=addJourney;
 
 async function apiPost(payload){const r=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});return r.json();}
+async function loadCheckinPolaroids(){
+  try{
+    const r=await fetch(API_URL+"?t="+Date.now());
+    const d=await r.json();
+    const pics=(d.photos||[]).slice(0,4);
+    const wrap=document.getElementById("polaroids");
+    if(!wrap)return;
+    if(!pics.length){wrap.classList.add("empty");return;}
+    wrap.classList.remove("empty");
+    ["p1","p2","p3","p4"].forEach((id,i)=>{
+      const img=document.getElementById(id);
+      if(!img)return;
+      if(pics[i] && pics[i].url){
+        img.src=pics[i].url;
+        img.parentElement.style.display="";
+      } else {
+        img.removeAttribute("src");
+        img.parentElement.style.display="none";
+      }
+    });
+  }catch(e){
+    console.warn(e);
+  }
+}
+
 async function loadDashboard(){
   const r=await fetch(API_URL+"?t="+Date.now());const d=await r.json();
   const w=Number(d.currentWeight||0),g=Math.max(1,Number(d.weightGoal||150)),pct=Math.min(100,Math.max(0,Math.round(w/g*100)));
