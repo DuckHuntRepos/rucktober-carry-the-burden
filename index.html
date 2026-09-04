@@ -134,39 +134,67 @@ label{font-size:11px;font-weight:900;letter-spacing:.8px;text-transform:uppercas
 input,select,textarea{width:100%;padding:14px;border-radius:11px;border:1px solid #393640;background:#0b0b10;color:white;font:inherit}
 textarea{min-height:92px}
 .upload{border:1px dashed #5c3381;border-radius:13px;padding:23px;text-align:center;cursor:pointer;background:#0f0c14}
-.upload{position:relative;z-index:2}
-.selfie-zone{position:relative;margin-bottom:10px;min-height:190px}
+.upload{position:relative;z-index:2;background:rgba(14,10,20,.58);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px dashed rgba(169,92,255,.55);box-shadow:0 10px 30px rgba(0,0,0,.22)}
+.selfie-zone{position:relative;margin-bottom:14px;min-height:260px;overflow:hidden}
+.selfie-zone .upload{margin:28px auto 0;max-width:680px;padding:20px 18px;border-radius:18px}
 .polaroids{
   position:absolute;inset:0;
   pointer-events:none;
   z-index:1;
-  opacity:.45;
+  opacity:.62;
 }
 .polaroid{
   position:absolute;
-  width:100px;height:118px;
+  width:122px;height:144px;
   background:#f3f0f4;
   border-radius:4px;
-  padding:7px 7px 18px 7px;
-  box-shadow:0 10px 24px rgba(0,0,0,.28);
+  padding:8px 8px 22px 8px;
+  box-shadow:0 12px 28px rgba(0,0,0,.34);
   overflow:hidden;
+  transition:transform .25s ease, opacity .25s ease;
 }
 .polaroid img{
   width:100%;height:100%;
   object-fit:cover;border-radius:2px;display:block;
 }
-.polaroid.p1{left:8px;top:10px;transform:rotate(-8deg)}
-.polaroid.p2{right:16px;top:2px;transform:rotate(7deg)}
-.polaroid.p3{left:28px;bottom:8px;transform:rotate(6deg)}
-.polaroid.p4{right:4px;bottom:0;transform:rotate(-6deg)}
 .polaroids.empty{display:none}
-@media(max-width:800px){
-  .selfie-zone{min-height:205px}
-  .polaroid{width:84px;height:100px}
-  .polaroid.p1{left:2px;top:16px}
-  .polaroid.p2{right:2px;top:0}
-  .polaroid.p3{left:12px;bottom:5px}
-  .polaroid.p4{right:0;bottom:3px}
+.polaroid.p1{left:-4px;top:24px;transform:rotate(-13deg)}
+.polaroid.p2{left:80px;top:126px;transform:rotate(8deg)}
+.polaroid.p3{left:230px;top:12px;transform:rotate(-6deg)}
+.polaroid.p4{left:310px;top:134px;transform:rotate(10deg)}
+.polaroid.p5{right:250px;top:16px;transform:rotate(7deg)}
+.polaroid.p6{right:150px;top:126px;transform:rotate(-10deg)}
+.polaroid.p7{right:28px;top:26px;transform:rotate(11deg)}
+.polaroid.p8{right:-8px;top:132px;transform:rotate(-8deg)}
+.polaroid.p9{left:150px;top:72px;transform:rotate(14deg)}
+.polaroid.p10{right:82px;top:74px;transform:rotate(-14deg)}
+@media(max-width:980px){
+  .selfie-zone{min-height:300px}
+  .selfie-zone .upload{margin-top:52px}
+  .polaroid{width:108px;height:128px}
+  .polaroid.p1{left:-8px;top:18px}
+  .polaroid.p2{left:18px;top:160px}
+  .polaroid.p3{left:120px;top:8px}
+  .polaroid.p4{left:146px;top:170px}
+  .polaroid.p5{right:118px;top:10px}
+  .polaroid.p6{right:30px;top:168px}
+  .polaroid.p7{right:-10px;top:26px}
+  .polaroid.p8{display:none}
+  .polaroid.p9{left:220px;top:84px}
+  .polaroid.p10{right:98px;top:90px}
+}
+@media(max-width:640px){
+  .selfie-zone{min-height:332px}
+  .selfie-zone .upload{margin-top:58px;padding:18px 16px}
+  .polaroid{width:96px;height:116px;padding:7px 7px 18px 7px}
+  .polaroid.p1{left:-10px;top:20px}
+  .polaroid.p2{left:8px;top:188px}
+  .polaroid.p3{left:86px;top:0}
+  .polaroid.p4{left:108px;top:204px}
+  .polaroid.p5{right:80px;top:8px}
+  .polaroid.p6{right:0;top:196px}
+  .polaroid.p7{right:-12px;top:30px}
+  .polaroid.p8,.polaroid.p9,.polaroid.p10{display:none}
 }
 
 .choice-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -321,8 +349,14 @@ th{color:#9e98a5;text-transform:uppercase;font-size:10px;letter-spacing:.6px}
         <div class="polaroid p2"><img id="p2" alt=""></div>
         <div class="polaroid p3"><img id="p3" alt=""></div>
         <div class="polaroid p4"><img id="p4" alt=""></div>
+        <div class="polaroid p5"><img id="p5" alt=""></div>
+        <div class="polaroid p6"><img id="p6" alt=""></div>
+        <div class="polaroid p7"><img id="p7" alt=""></div>
+        <div class="polaroid p8"><img id="p8" alt=""></div>
+        <div class="polaroid p9"><img id="p9" alt=""></div>
+        <div class="polaroid p10"><img id="p10" alt=""></div>
       </div>
-      <div class="upload" onclick="document.getElementById('photoInput').click()"><div style="font-size:30px">📸</div><strong id="uploadTitle">Add a selfie with the bag</strong><div id="uploadSub" style="color:var(--muted);font-size:12px;margin-top:4px">Optional</div></div>
+      <div class="upload" onclick="document.getElementById('photoInput').click()"><div style="font-size:28px;line-height:1">📸</div><strong id="uploadTitle" style="display:block;font-size:18px;margin-top:8px">Add a selfie with the bag</strong><div id="uploadSub" style="color:var(--muted);font-size:12px;margin-top:4px">Optional</div></div>
     </div>
     <input id="photoInput" type="file" accept="image/*" capture="user" class="hidden">
     <div class="field"><label>F3 Name *</label><input id="name" placeholder="Enter your F3 name" autocomplete="off"></div>
@@ -381,20 +415,29 @@ async function loadCheckinPolaroids(){
   try{
     const r=await fetch(API_URL+"?t="+Date.now());
     const d=await r.json();
-    const pics=(d.photos||[]).slice(0,4);
+    const all=(d.photos||[]).filter(x=>x && x.url);
     const wrap=document.getElementById("polaroids");
     if(!wrap)return;
-    if(!pics.length){wrap.classList.add("empty");return;}
+    const slots=["p1","p2","p3","p4","p5","p6","p7","p8","p9","p10"];
+    if(!all.length){
+      wrap.classList.add("empty");
+      return;
+    }
+
+    const shuffled=[...all].sort(()=>Math.random()-0.5);
+    const picks=shuffled.slice(0, Math.min(slots.length, shuffled.length));
+
     wrap.classList.remove("empty");
-    ["p1","p2","p3","p4"].forEach((id,i)=>{
+    slots.forEach((id,i)=>{
       const img=document.getElementById(id);
       if(!img)return;
-      if(pics[i] && pics[i].url){
-        img.src=pics[i].url;
-        img.parentElement.style.display="";
+      const frame=img.parentElement;
+      if(picks[i] && picks[i].url){
+        img.src=picks[i].url;
+        frame.style.display="";
       } else {
         img.removeAttribute("src");
-        img.parentElement.style.display="none";
+        frame.style.display="none";
       }
     });
   }catch(e){
