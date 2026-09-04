@@ -284,7 +284,7 @@ th{color:#9e98a5;text-transform:uppercase;font-size:10px;letter-spacing:.6px}
     <input id="photoInput" type="file" accept="image/*" capture="user" class="hidden">
     <div class="field"><label>F3 Name *</label><input id="name" placeholder="Enter your F3 name" autocomplete="off"></div>
     <div class="field"><label>AO *</label><select id="ao"><option value="">Select your AO</option><option>Non-F3</option><option>Black Rock</option><option>Citadel</option><option>Complex</option><option>Da Grizz</option><option>Dark Tower</option><option>DMZ</option><option>El Coyote</option><option>Ice House</option><option>Iron Lion</option><option>Launchpad</option><option>Levee</option><option>MoTown</option><option>Noonan’s Ridge</option><option>Outpost</option><option>Rail Splitter</option><option>The Campus</option><option>The Colosseum</option><option>The Globe</option><option>The Grove</option><option>The Island</option><option>The Olympiad</option><option>The Raven’s Nest</option><option>The Ridge</option><option>The Silo</option><option>The Wood</option><option>Three Rivers</option><option>Two Wolves</option></select></div>
-    <div class="field"><label>What did you do today?</label><div class="choice-grid"><div class="choice" data-value="Donated">Donated</div><div class="choice" data-value="Carried">Carried</div><div class="choice active" data-value="Both">Both</div></div></div>
+    <div class="field"><label>What did you do today?</label><div class="choice-grid"><div class="choice active" data-value="Donated">Donated</div><div class="choice" data-value="Carried">Carried</div><div class="choice" data-value="Both">Both</div></div></div>
     <button id="submitBtn" class="primary full" style="margin-top:18px">ADD ME TO THE JOURNEY</button>
     <a href="https://venmo.com/u/BlindGuy422" target="_blank" rel="noopener noreferrer" class="secondary full" style="display:block;box-sizing:border-box;text-align:center;text-decoration:none;border-radius:10px;padding:12px 14px;font-weight:900;margin-top:10px">DONATE WITH VENMO</a>
     <div id="checkinMessage"></div>
@@ -322,7 +322,7 @@ th{color:#9e98a5;text-transform:uppercase;font-size:10px;letter-spacing:.6px}
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbxdVdeu6YWpAK7shYZOJ5AxME359Tly3kMi9npdWov0ZthJoAub9zKrCJmlOsAXkFjU/exec";
-let selectedAction="Both", selectedPhoto=null, loadedAdminWeight=null;
+let selectedAction="Donated", selectedPhoto=null, loadedAdminWeight=null;
 const qp=new URLSearchParams(location.search);
 const isAdmin=qp.has("admin");
 const isCheckin=qp.get("checkin")==="1";
