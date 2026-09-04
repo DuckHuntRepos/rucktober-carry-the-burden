@@ -427,14 +427,38 @@ async function loadCheckinPolaroids(){
     const shuffled=[...all].sort(()=>Math.random()-0.5);
     const picks=shuffled.slice(0, Math.min(slots.length, shuffled.length));
 
+    const isSmall=window.matchMedia("(max-width:640px)").matches;
+    const isMedium=window.matchMedia("(max-width:980px)").matches;
+    const maxShown=isSmall ? 7 : (isMedium ? 9 : 10);
+
+    const rand=(min,max)=>Math.random()*(max-min)+min;
+
     wrap.classList.remove("empty");
     slots.forEach((id,i)=>{
       const img=document.getElementById(id);
       if(!img)return;
       const frame=img.parentElement;
-      if(picks[i] && picks[i].url){
+      if(picks[i] && picks[i].url && i<maxShown){
         img.src=picks[i].url;
         frame.style.display="";
+
+        const w = wrap.clientWidth || 320;
+        const h = wrap.clientHeight || 300;
+
+        const scale = rand(.88,1.16);
+        const angle = rand(-16,16);
+        const leftPct = rand(-3,78);
+        const topPct = rand(0,68);
+        const z = Math.floor(rand(1,12));
+        const opacity = rand(.48,.72);
+
+        frame.style.left = leftPct + "%";
+        frame.style.right = "auto";
+        frame.style.top = topPct + "%";
+        frame.style.bottom = "auto";
+        frame.style.transform = `rotate(${angle}deg) scale(${scale})`;
+        frame.style.zIndex = z;
+        frame.style.opacity = opacity;
       } else {
         img.removeAttribute("src");
         frame.style.display="none";
